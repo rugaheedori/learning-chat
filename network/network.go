@@ -3,6 +3,7 @@ package network
 import (
 	"log"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,6 +15,17 @@ type Network struct {
 func NewServer() *Network {
 	n := &Network{engin: gin.New()}
 
+	// n.engin.Use: app.use와 같은 모든 라우터에 대해 특정 범용처리 하는 부분
+	n.engin.Use(gin.Logger())
+	// gin.Recovery: 오류로 인해 서버가 죽은 경우 자동으로 서버를 다시 올려주는 역할
+	n.engin.Use(gin.Recovery())
+	n.engin.Use(cors.New(cors.Config{
+		AllowWebSockets:  true,
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT"},
+		AllowHeaders:     []string{"*"},
+		AllowCredentials: true,
+	}))
 	return n
 }
 
