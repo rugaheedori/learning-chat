@@ -3,6 +3,7 @@ package network
 import (
 	"chat_server_golang/types"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -41,6 +42,35 @@ func NewRoom() *Room {
 		Join:    make(chan *Client),
 		Leave:   make(chan *Client),
 		Clients: make(map[*Client]bool),
+	}
+}
+
+func (c *Client) Read() {
+	// 클라이언트가 들어오는 메세지를 읽는 함수
+	defer c.Socket.Close()
+	for {
+		var msg *message
+		err := c.Socket.ReadJSON(&msg)
+		if err != nil {
+			panic(err)
+		} else {
+			msg.Time = time.Now().Unix()
+			msg.Name = c.Name
+
+			c.Room.Forward <- msg
+		}
+	}
+}
+
+func (c *Client) Write() {
+	defer c.Socket.Close()
+	// 클라이언트가 메세지를 전송하는 함수
+	for msg := range c.Send {
+		err := c.Socket.WriteJSON(msg)
+
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -87,4 +117,8 @@ func (r *Room) SocketServe(c *gin.Context) {
 	defer func() {
 		r.Leave <- client
 	}()
+
+	go client.Write()
+
+	client.Read()
 }
