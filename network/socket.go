@@ -44,6 +44,24 @@ func NewRoom() *Room {
 	}
 }
 
+func (r *Room) RunInt() {
+	// Room에 있는 모든 채널값을 받는 역할
+	for {
+		select {
+		case client := <-r.Join:
+			r.Clients[client] = true
+		case client := <-r.Leave:
+			r.Clients[client] = false
+			delete(r.Clients, client)
+			close(client.Send)
+		case msg := <-r.Forward:
+			for client := range r.Clients {
+				client.Send <- msg
+			}
+		}
+	}
+}
+
 // gin 사용 시 API 연결 가능하게 해줌
 func (r *Room) SocketServe(c *gin.Context) {
 	socket, err := upgrader.Upgrade(c.Writer, c.Request, nil)
