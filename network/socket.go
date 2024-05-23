@@ -2,6 +2,7 @@ package network
 
 import (
 	"chat_server_golang/types"
+	"log"
 	"net/http"
 	"time"
 
@@ -50,9 +51,15 @@ func (c *Client) Read() {
 	defer c.Socket.Close()
 	for {
 		var msg *message
+		log.Println("Read", msg, "Name", c.Name)
 		err := c.Socket.ReadJSON(&msg)
 		if err != nil {
-			panic(err)
+			// Close가 됐음에도 동시성 이슈로 인한 ReadJSON 실행 시 socket 끊김 에러 처리
+			if !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+				break
+			} else {
+				panic(err)
+			}
 		} else {
 			msg.Time = time.Now().Unix()
 			msg.Name = c.Name
@@ -66,6 +73,7 @@ func (c *Client) Write() {
 	defer c.Socket.Close()
 	// 클라이언트가 메세지를 전송하는 함수
 	for msg := range c.Send {
+		log.Println("Write", msg, "Name", c.Name)
 		err := c.Socket.WriteJSON(msg)
 
 		if err != nil {
@@ -74,7 +82,7 @@ func (c *Client) Write() {
 	}
 }
 
-func (r *Room) RunInt() {
+func (r *Room) RunInit() {
 	// Room에 있는 모든 채널값을 받는 역할
 	for {
 		select {
@@ -83,7 +91,7 @@ func (r *Room) RunInt() {
 		case client := <-r.Leave:
 			r.Clients[client] = false
 			delete(r.Clients, client)
-			close(client.Send)
+			close(client.Send) // 채널을 닫아주는 역할
 		case msg := <-r.Forward:
 			for client := range r.Clients {
 				client.Send <- msg

@@ -26,6 +26,13 @@ func NewServer() *Network {
 		AllowHeaders:     []string{"*"},
 		AllowCredentials: true,
 	}))
+
+	r := NewRoom()
+	// go rutine? 고루틴 : 백그라운드에서 동하라는 명령어
+	go r.RunInit()
+
+	n.engin.GET("/room", r.SocketServe)
+
 	return n
 }
 
