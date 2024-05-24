@@ -18,7 +18,7 @@ class Room {
     this.clients.delete(client);
   }
 
-  forwardMessage(message: string) {
+  forwardMessage(message: {name: string, msg: string}) {
     socketLogger.info("send message all clients");
     for (const client of this.clients) {
       client.send(JSON.stringify(message));
