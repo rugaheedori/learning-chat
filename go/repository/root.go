@@ -32,6 +32,39 @@ func NewRepository(cfg *config.Config) (*Repository, error) {
 	}
 }
 
+func (s *Repository) GetChatList(roomName string) ([]*schema.Chat, error) {
+	qs := query([]string{"SELECT * FROM", chat, "WHERE room = ? ORDER BY `when` DESC LIMIT 10"})
+
+	if cursor, err := s.db.Query(qs, roomName); err != nil {
+		return nil, err
+	} else {
+		defer cursor.Close()
+
+		var result []*schema.Chat
+
+		for cursor.Next() {
+			d := new(schema.Chat)
+
+			if err = cursor.Scan(
+				&d.ID,
+				&d.Room,
+				&d.Name,
+				&d.Message,
+				&d.When,
+			); err != nil {
+				return nil, err
+			} else {
+				result = append(result, d)
+			}
+		}
+
+		if len(result) == 0 {
+			return []*schema.Chat{}, nil
+		}
+		return result, nil
+	}
+}
+
 func (s *Repository) RoomList() ([]*schema.Room, error) {
 	// TODO 페이징 추가하기
 	qs := query([]string{"SELECT * FROM", room})
