@@ -4,14 +4,9 @@ import (
 	"chat_server_golang/config"
 	"chat_server_golang/network"
 	"chat_server_golang/repository"
+	"chat_server_golang/service"
 	"flag"
-	"fmt"
-	"log"
 )
-
-func init() {
-	log.Println("먼저 시작 됩니다.")
-}
 
 var pathFlag = flag.String("config", "./config.toml", "config set")
 var port = flag.String("port", ":1010", "port set")
@@ -23,12 +18,7 @@ func main() {
 	if rep, err := repository.NewRepository(c); err != nil {
 		panic(err)
 	} else {
-		fmt.Println(rep)
+		s := network.NewServer(service.NewService(rep), rep, *port)
+		s.StartServer()
 	}
-
-	fmt.Println(c)
-
-	log.Println("나중에 시작 됩니다.")
-	n := network.NewServer()
-	n.StartServer()
 }

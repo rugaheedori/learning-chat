@@ -1,44 +1,51 @@
 package network
 
 import (
+	"chat_server_golang/repository"
+	"chat_server_golang/service"
 	"log"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-type Network struct {
+type Server struct {
 	engin *gin.Engine
+
+	service    *service.Service
+	repository *repository.Repository
+
+	port string
+	ip   string
 }
 
 // 프레임워크를 사용할 수 있는 객체값 리턴함수 생성
-func NewServer() *Network {
-	n := &Network{engin: gin.New()}
+func NewServer(service *service.Service, repository *repository.Repository, port string) *Server {
+	s := &Server{engin: gin.New(), service: service, repository: repository, port: port}
 
-	// n.engin.Use: app.use와 같은 모든 라우터에 대해 특정 범용처리 하는 부분
-	n.engin.Use(gin.Logger())
+	// s.engin.Use: app.use와 같은 모든 라우터에 대해 특정 범용처리 하는 부분
+	s.engin.Use(gin.Logger())
 	// gin.Recovery: 오류로 인해 서버가 죽은 경우 자동으로 서버를 다시 올려주는 역할
-	n.engin.Use(gin.Recovery())
-	n.engin.Use(cors.New(cors.Config{
-		AllowWebSockets:  true,
+	s.engin.Use(gin.Recovery())
+	s.engin.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "PUT"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
 		AllowHeaders:     []string{"*"},
+		ExposeHeaders:    []string{"*"},
 		AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			return true
+		},
 	}))
 
-	r := NewRoom()
-	// go rutine? 고루틴 : 백그라운드에서 동하라는 명령어
-	go r.RunInit()
+	registerServer(s.engin)
 
-	n.engin.GET("/room", r.SocketServe)
-
-	return n
+	return s
 }
 
 // 서버 시작 함수
-func (n *Network) StartServer() error {
+func (s *Server) StartServer() error {
 	log.Println("Starting Server")
 
-	return n.engin.Run(":8080")
+	return s.engin.Run(s.port)
 }
