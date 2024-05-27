@@ -16,7 +16,7 @@ func NewService(repository *repository.Repository) *Service {
 	return s
 }
 
-func (s *Service) GetChatList(roomName string) ([]*schema.Chat, error) {
+func (s *Service) EnterRoom(roomName string) ([]*schema.Chat, error) {
 	if res, err := s.repository.GetChatList(roomName); err != nil {
 		log.Println("Failed To Get All Chat LIist", "err", err.Error())
 		return nil, err

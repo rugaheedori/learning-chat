@@ -1,19 +1,69 @@
 package network
 
 import (
+	"chat_server_golang/types"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
-type data struct {
+type api struct {
+	server *Server
 }
 
-func registerServer(engine *gin.Engine) *data {
-	d := &data{}
+func registerServer(server *Server) {
+	a := &api{server: server}
 
 	r := NewRoom()
 	go r.Run()
 
-	engine.GET("/room", r.ServeHTTP)
+	server.engine.GET("/room-list", a.roomList)
+	server.engine.GET("/room", a.room)
+	server.engine.GET("/enter-room", a.enterRoom)
 
-	return d
+	server.engine.POST("/make-room", a.makeRoom)
+}
+
+func (a *api) roomList(c *gin.Context) {
+	if res, err := a.server.service.RoomList(); err != nil {
+		response(c, http.StatusInternalServerError, err.Error())
+	} else {
+		response(c, http.StatusOK, res)
+	}
+}
+
+func (a *api) room(c *gin.Context) {
+	var req types.FormRoomReq
+
+	if err := c.ShouldBindQuery(&req); err != nil {
+		response(c, http.StatusUnprocessableEntity, err.Error())
+	} else if res, err := a.server.service.Room(req.Name); err != nil {
+		response(c, http.StatusInternalServerError, err.Error())
+	} else {
+		response(c, http.StatusOK, res)
+	}
+}
+
+func (a *api) enterRoom(c *gin.Context) {
+	var req types.FormRoomReq
+
+	if err := c.ShouldBindQuery(&req); err != nil {
+		response(c, http.StatusUnprocessableEntity, err.Error())
+	} else if res, err := a.server.service.EnterRoom(req.Name); err != nil {
+		response(c, http.StatusInternalServerError, err.Error())
+	} else {
+		response(c, http.StatusOK, res)
+	}
+}
+
+func (a *api) makeRoom(c *gin.Context) {
+	var req types.BodyRoomReq
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response(c, http.StatusUnprocessableEntity, err.Error())
+	} else if err := a.server.service.MakeRoom(req.Name); err != nil {
+		response(c, http.StatusInternalServerError, err.Error())
+	} else {
+		response(c, http.StatusOK, "success")
+	}
 }
