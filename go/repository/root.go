@@ -4,6 +4,7 @@ import (
 	"chat_server_golang/config"
 	"chat_server_golang/types/schema"
 	"database/sql"
+	"log"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -30,6 +31,14 @@ func NewRepository(cfg *config.Config) (*Repository, error) {
 	} else {
 		return r, nil
 	}
+}
+
+func (s *Repository) InsertChatting(user, message, roomName string) error {
+	log.Println("Insert Chatting Using WSS", "from", user, "message", message, "room", roomName)
+
+	_, err := s.db.Exec("INSERT INTO chatting.chat(room, name, message) VALUES(?, ?, ?)", roomName, user, message)
+
+	return err
 }
 
 func (s *Repository) GetChatList(roomName string) ([]*schema.Chat, error) {

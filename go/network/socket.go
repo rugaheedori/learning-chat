@@ -1,6 +1,7 @@
 package network
 
 import (
+	"chat_server_golang/service"
 	"chat_server_golang/types"
 	"log"
 	"net/http"
@@ -19,6 +20,8 @@ type Room struct {
 	Leave chan *Client // Socket이 끊어지는 경우에 동작
 
 	Clients map[*Client]bool // 현재 방에 있는 Client의 정보를 저장
+
+	service *service.Service
 }
 
 type Client struct {
@@ -71,12 +74,13 @@ func (c *Client) Write() {
 }
 
 // Room객체 필드들을 초기화해주는 함수
-func NewRoom() *Room {
+func NewRoom(service *service.Service) *Room {
 	return &Room{
 		Forward: make(chan *message),
 		Join:    make(chan *Client),
 		Leave:   make(chan *Client),
 		Clients: make(map[*Client]bool),
+		service: service,
 	}
 }
 

@@ -14,7 +14,7 @@ type api struct {
 func registerServer(server *Server) {
 	a := &api{server: server}
 
-	r := NewRoom()
+	r := NewRoom(server.service)
 	go r.Run()
 
 	server.engine.GET("/room-list", a.roomList)
