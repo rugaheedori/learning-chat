@@ -1,7 +1,6 @@
 package network
 
 import (
-	"chat_server_golang/repository"
 	"chat_server_golang/service"
 	"log"
 
@@ -12,16 +11,15 @@ import (
 type Server struct {
 	engine *gin.Engine
 
-	service    *service.Service
-	repository *repository.Repository
+	service *service.Service
 
 	port string
 	ip   string
 }
 
 // 프레임워크를 사용할 수 있는 객체값 리턴함수 생성
-func NewServer(service *service.Service, repository *repository.Repository, port string) *Server {
-	s := &Server{engine: gin.New(), service: service, repository: repository, port: port}
+func NewServer(service *service.Service, port string) *Server {
+	s := &Server{engine: gin.New(), service: service, port: port}
 
 	// s.engine.Use: app.use와 같은 모든 라우터에 대해 특정 범용처리 하는 부분
 	s.engine.Use(gin.Logger())

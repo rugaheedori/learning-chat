@@ -18,7 +18,7 @@ func main() {
 	if rep, err := repository.NewRepository(c); err != nil {
 		panic(err)
 	} else {
-		s := network.NewServer(service.NewService(rep), rep, *port)
+		s := network.NewServer(service.NewService(rep), *port)
 		s.StartServer()
 	}
 }
