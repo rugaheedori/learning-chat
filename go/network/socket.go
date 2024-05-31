@@ -28,13 +28,14 @@ type Client struct {
 	Socket *websocket.Conn // client의 웹 소켓
 	Send   chan *message   // 전송되는 채널
 	Room   *Room
-	Name   string
+	Name   string `json:"name"`
 }
 
 type message struct {
-	Name    string
-	Message string
-	When    time.Time
+	Name    string    `json:"name"`
+	Message string    `json:"message"`
+	Room    string    `json:"room"`
+	When    time.Time `json:"when"`
 }
 
 func (c *Client) Read() {
@@ -95,6 +96,9 @@ func (r *Room) Run() {
 			delete(r.Clients, client) // 나갈 때에는 map값에서 client를 제거
 			close(client.Send)        // 이후 client의 socket을 닫음
 		case msg := <-r.Forward: // 특정 메세지가 방에 들어오면
+			// 백그라운드에서 DB insert => 멀티 스레드 진행
+			go r.service.InsertChatting(msg.Name, msg.Message, msg.Room)
+
 			for client := range r.Clients {
 				client.Send <- msg // 모든 client에게 전달
 			}
