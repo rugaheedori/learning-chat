@@ -2,8 +2,12 @@ package network
 
 import (
 	"chat_server_golang/service"
+	"encoding/json"
 	"log"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -74,6 +78,39 @@ func (s *Server) setServerInfo() {
 // 서버 시작 함수
 func (s *Server) StartServer() error {
 	s.setServerInfo()
+
+	// 일종의 이벤트를 받을 수 있는 변수를 선언
+	channel := make(chan os.Signal, 1)
+	// 서버가 죽었을 때 감지하여 채널에 메세지를 전송함
+	signal.Notify(channel, syscall.SIGINT)
+
+	go func() {
+		<-channel // 서버가 죽었다는 의미
+
+		if err := s.service.ServerSet(s.ip+s.port, false); err != nil {
+			// todo 실패 케이스에 대해 추가 처리 필요 ex) retry option
+			log.Println("Failed to Set Server Into When Close", "err", err)
+		}
+
+		// Kafka에 이벤트 전송
+
+		type ServerInfoEvent struct {
+			IP     string
+			Status bool
+		}
+
+		e := &ServerInfoEvent{
+			IP:     s.ip + s.port,
+			Status: false,
+		}
+
+		// 값을 전송할 때는 배열 바이트 값으로 전송해야 함
+		if v, err := json.Marshal(e); err != nil {
+			log.Println("Failed To Marshal")
+		} else {
+			// TODO Send Event To Kafka
+		}
+	}()
 
 	log.Println("Starting Server")
 	return s.engine.Run(s.port)
