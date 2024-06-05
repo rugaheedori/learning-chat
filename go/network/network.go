@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -103,12 +104,16 @@ func (s *Server) StartServer() error {
 			IP:     s.ip + s.port,
 			Status: false,
 		}
+		ch := make(chan kafka.Event)
 
 		// 값을 전송할 때는 배열 바이트 값으로 전송해야 함
 		if v, err := json.Marshal(e); err != nil {
 			log.Println("Failed To Marshal")
-		} else {
+		} else if result, err := s.service.PublishEvent("chat", v, ch); err != nil {
 			// TODO Send Event To Kafka
+			log.Println("Failed To Send Event to Kafka", "err", err)
+		} else {
+			log.Println("Success To Send Event", result)
 		}
 	}()
 

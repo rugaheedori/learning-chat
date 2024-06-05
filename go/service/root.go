@@ -4,6 +4,8 @@ import (
 	"chat_server_golang/repository"
 	"chat_server_golang/types/schema"
 	"log"
+
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 type Service struct {
@@ -14,6 +16,10 @@ func NewService(repository *repository.Repository) *Service {
 	s := &Service{repository: repository}
 
 	return s
+}
+
+func (s *Service) PublishEvent(topic string, value []byte, ch chan kafka.Event) (kafka.Event, error) {
+	return s.repository.Kafka.PublishEvent(topic, value, ch)
 }
 
 func (s *Service) ServerSet(ip string, available bool) error {
