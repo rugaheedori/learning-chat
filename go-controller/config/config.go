@@ -16,6 +16,10 @@ type Config struct {
 		URL      string
 		ClientID string
 	}
+
+	Info struct {
+		Port string
+	}
 }
 
 func NewConfig(path string) *Config {

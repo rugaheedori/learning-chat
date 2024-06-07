@@ -17,6 +17,7 @@ func NewKafka(cfg *config.Config) (*Kafka, error) {
 
 	var err error
 
+	// TODO Consumer
 	if k.producer, err = kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": cfg.Kafka.URL,
 		"client.id":         cfg.Kafka.ClientID,
