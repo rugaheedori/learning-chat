@@ -13,13 +13,13 @@ type Server struct {
 
 	service *service.Service
 
-	port string
-	ip   string
+	port          string
+	avgServerList map[string]bool
 }
 
 // 프레임워크를 사용할 수 있는 객체값 리턴함수 생성
 func NewNetwork(service *service.Service, port string) *Server {
-	s := &Server{engine: gin.New(), service: service, port: port}
+	s := &Server{engine: gin.New(), service: service, port: port, avgServerList: make(map[string]bool)}
 
 	// s.engine.Use: app.use와 같은 모든 라우터에 대해 특정 범용처리 하는 부분
 	s.engine.Use(gin.Logger())
@@ -36,9 +36,19 @@ func NewNetwork(service *service.Service, port string) *Server {
 		},
 	}))
 
-	// registerServer(s)
+	s.setServerInfo()
 
 	return s
+}
+
+func (s *Server) setServerInfo() {
+	if serverList, err := s.service.GetAvailableServerList(); err != nil {
+		panic(err)
+	} else {
+		for _, server := range serverList {
+			s.avgServerList[server.IP] = true
+		}
+	}
 }
 
 func (s *Server) Start() error {

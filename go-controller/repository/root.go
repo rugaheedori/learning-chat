@@ -3,7 +3,9 @@ package repository
 import (
 	"controller_server_golang/config"
 	"controller_server_golang/repository/kafka"
+	"controller_server_golang/types/table"
 	"database/sql"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -16,6 +18,12 @@ type Repository struct {
 	Kafka *kafka.Kafka
 }
 
+const (
+	room       = "chatting.room"
+	chat       = "chatting.chat"
+	serverInfo = "chatting.serverInfo"
+)
+
 func NewRepository(cfg *config.Config) (*Repository, error) {
 	r := &Repository{cfg: cfg}
 	var err error
@@ -26,5 +34,40 @@ func NewRepository(cfg *config.Config) (*Repository, error) {
 		return nil, err
 	} else {
 		return r, nil
+	}
+}
+
+func query(qs []string) string {
+	return strings.Join(qs, " ") + ";"
+}
+
+func (r *Repository) GetAvailableServerList() ([]*table.ServerInfo, error) {
+	qs := query([]string{"SELECT * FROM", serverInfo, "WHERE available = 1"})
+
+	if cursor, err := r.db.Query(qs); err != nil {
+		return nil, err
+	} else {
+		defer cursor.Close()
+
+		var result []*table.ServerInfo
+
+		for cursor.Next() {
+			d := new(table.ServerInfo)
+
+			if err = cursor.Scan(
+				&d.IP,
+				&d.Available,
+			); err != nil {
+				return nil, err
+			} else {
+				result = append(result, d)
+			}
+		}
+
+		if len(result) == 0 {
+			return []*table.ServerInfo{}, nil
+		} else {
+			return result, nil
+		}
 	}
 }
