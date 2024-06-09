@@ -8,11 +8,11 @@ import (
 type Service struct {
 	repository *repository.Repository
 
-	avgServerList map[string]bool
+	AvgServerList map[string]bool
 }
 
 func NewService(repository *repository.Repository) *Service {
-	s := &Service{repository: repository, avgServerList: make(map[string]bool)}
+	s := &Service{repository: repository, AvgServerList: make(map[string]bool)}
 
 	s.setServerInfo()
 
@@ -24,7 +24,7 @@ func (s *Service) setServerInfo() {
 		panic(err)
 	} else {
 		for _, server := range serverList {
-			s.avgServerList[server.IP] = true
+			s.AvgServerList[server.IP] = true
 		}
 	}
 }

@@ -35,6 +35,8 @@ func NewNetwork(service *service.Service, port string) *Server {
 		},
 	}))
 
+	registerTowerAPI(s)
+
 	return s
 }
 
