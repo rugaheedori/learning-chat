@@ -29,6 +29,18 @@ func (s *Service) setServerInfo() {
 	}
 }
 
+func (s *Service) GetAvgServrList() []string {
+	var res []string
+
+	for ip, available := range s.AvgServerList {
+		if available {
+			res = append(res, ip)
+		}
+	}
+
+	return res
+}
+
 func (s *Service) GetAvailableServerList() ([]*table.ServerInfo, error) {
 	return s.repository.GetAvailableServerList()
 }
