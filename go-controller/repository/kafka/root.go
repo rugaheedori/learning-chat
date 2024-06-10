@@ -9,7 +9,7 @@ import (
 type Kafka struct {
 	cfg *config.Config
 
-	producer *kafka.Producer
+	consumer *kafka.Consumer
 }
 
 func NewKafka(cfg *config.Config) (*Kafka, error) {
@@ -17,10 +17,10 @@ func NewKafka(cfg *config.Config) (*Kafka, error) {
 
 	var err error
 
-	// TODO Consumer
-	if k.producer, err = kafka.NewProducer(&kafka.ConfigMap{
+	if k.consumer, err = kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": cfg.Kafka.URL,
-		"client.id":         cfg.Kafka.ClientID,
+		"group.id":          cfg.Kafka.GroupId,
+		"auto.offset.reset": "latest", // 서버 실행 시 최근 값만 읽음
 		"acks":              "all",
 	}); err != nil {
 		return nil, err

@@ -3,6 +3,7 @@ package service
 import (
 	"chat_server_golang/repository"
 	"chat_server_golang/types/schema"
+	"encoding/json"
 	"log"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -16,6 +17,27 @@ func NewService(repository *repository.Repository) *Service {
 	s := &Service{repository: repository}
 
 	return s
+}
+
+func (s *Service) PublishServerStatusEvent(ip string, status bool) {
+	// Kafka에 이벤트 전송
+	type ServerInfoEvent struct {
+		IP     string
+		Status bool
+	}
+
+	e := &ServerInfoEvent{IP: ip, Status: status}
+	ch := make(chan kafka.Event)
+
+	// 값을 전송할 때는 배열 바이트 값으로 전송해야 함
+	if v, err := json.Marshal(e); err != nil {
+		log.Println("Failed To Marshal")
+	} else if result, err := s.PublishEvent("chat", v, ch); err != nil {
+		// TODO Send Event To Kafka
+		log.Println("Failed To Send Event to Kafka", "err", err)
+	} else {
+		log.Println("Success To Send Event", result)
+	}
 }
 
 func (s *Service) PublishEvent(topic string, value []byte, ch chan kafka.Event) (kafka.Event, error) {

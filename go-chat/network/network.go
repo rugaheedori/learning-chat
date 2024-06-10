@@ -2,14 +2,12 @@ package network
 
 import (
 	"chat_server_golang/service"
-	"encoding/json"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -72,6 +70,9 @@ func (s *Server) setServerInfo() {
 			} else {
 				s.ip = ip.String()
 			}
+
+			// 서버가 켜진 상태이므로 true로 전송
+			s.service.PublishServerStatusEvent(s.ip+s.port, true)
 		}
 	}
 }
@@ -93,28 +94,10 @@ func (s *Server) StartServer() error {
 			log.Println("Failed to Set Server Into When Close", "err", err)
 		}
 
-		// Kafka에 이벤트 전송
+		// 서버가 종료되는 상태이므로 false로 전송
+		s.service.PublishServerStatusEvent(s.ip+s.port, false)
 
-		type ServerInfoEvent struct {
-			IP     string
-			Status bool
-		}
-
-		e := &ServerInfoEvent{
-			IP:     s.ip + s.port,
-			Status: false,
-		}
-		ch := make(chan kafka.Event)
-
-		// 값을 전송할 때는 배열 바이트 값으로 전송해야 함
-		if v, err := json.Marshal(e); err != nil {
-			log.Println("Failed To Marshal")
-		} else if result, err := s.service.PublishEvent("chat", v, ch); err != nil {
-			// TODO Send Event To Kafka
-			log.Println("Failed To Send Event to Kafka", "err", err)
-		} else {
-			log.Println("Success To Send Event", result)
-		}
+		os.Exit(1)
 	}()
 
 	log.Println("Starting Server")
