@@ -3,6 +3,10 @@ package service
 import (
 	"controller_server_golang/repository"
 	"controller_server_golang/types/table"
+	"fmt"
+	"log"
+
+	. "github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 type Service struct {
@@ -16,7 +20,27 @@ func NewService(repository *repository.Repository) *Service {
 
 	s.setServerInfo()
 
+	if err := s.repository.Kafka.RegisterSubTopic("chat"); err != nil {
+		panic(err)
+	} else {
+		go s.loopSubKafka()
+	}
+
 	return s
+}
+
+// 서브 스레드로 들어오는 이벤트를 감지해야 함
+func (s *Service) loopSubKafka() {
+	for {
+		ev := s.repository.Kafka.Pool(100)
+
+		switch event := ev.(type) {
+		case *Message:
+			fmt.Println(event)
+		case *Error:
+			log.Print("Failed To Pooling Event", event.Error())
+		}
+	}
 }
 
 func (s *Service) setServerInfo() {
