@@ -3,6 +3,7 @@ package service
 import (
 	"controller_server_golang/repository"
 	"controller_server_golang/types/table"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -36,6 +37,21 @@ func (s *Service) loopSubKafka() {
 
 		switch event := ev.(type) {
 		case *Message:
+
+			type ServerInfoEvent struct {
+				IP     string
+				Status bool
+			}
+
+			var decoder ServerInfoEvent
+
+			if err := json.Unmarshal(event.Value, &decoder); err != nil {
+				log.Println("Failed To Decode Event", event.Value)
+			} else {
+				fmt.Println(decoder)
+				s.AvgServerList[decoder.IP] = decoder.Status
+			}
+
 			fmt.Println(event)
 		case *Error:
 			log.Print("Failed To Pooling Event", event.Error())
